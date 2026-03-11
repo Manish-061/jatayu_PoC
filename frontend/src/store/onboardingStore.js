@@ -8,8 +8,6 @@ const defaultState = {
   formData: {},
 };
 
-let onboardingState = loadState();
-
 function loadState() {
   if (typeof window === "undefined") {
     return { ...defaultState };
@@ -27,9 +25,9 @@ function loadState() {
   }
 }
 
-function persistState() {
+function persistState(nextState) {
   if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(onboardingState));
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
   }
 }
 
@@ -67,43 +65,54 @@ function formDataFromApplication(application) {
 }
 
 export function setStartedApplication(applicationId, status) {
-  onboardingState = {
-    ...onboardingState,
+  const currentState = loadState();
+  const nextState = {
+    ...currentState,
     applicationId,
     started: true,
     status,
   };
-  persistState();
+
+  persistState(nextState);
+  return nextState;
 }
 
 export function syncApplication(application) {
-  onboardingState = {
-    ...onboardingState,
+  const currentState = loadState();
+  const nextState = {
+    ...currentState,
     applicationId: application.id,
     started: true,
     status: application.status,
     completedSteps: completedStepsFromApplication(application),
     formData: formDataFromApplication(application),
   };
-  persistState();
+
+  persistState(nextState);
+  return nextState;
+}
+
+export function getOnboardingState() {
+  return loadState();
 }
 
 export function isApplicationStarted() {
-  return onboardingState.started && Boolean(onboardingState.applicationId);
+  const state = loadState();
+  return state.started && Boolean(state.applicationId);
 }
 
 export function isStepCompleted(stepKey) {
-  return Boolean(onboardingState.completedSteps[stepKey]);
+  return Boolean(loadState().completedSteps[stepKey]);
 }
 
 export function getApplicationId() {
-  return onboardingState.applicationId;
+  return loadState().applicationId;
 }
 
 export function getOnboardingStatus() {
-  return onboardingState.status;
+  return loadState().status;
 }
 
 export function getOnboardingData() {
-  return onboardingState.formData;
+  return loadState().formData;
 }

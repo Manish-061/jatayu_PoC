@@ -11,8 +11,8 @@ import ConsentPage from "./pages/ConsentPage";
 import ProcessingPage from "./pages/ProcessingPage";
 import { isApplicationStarted, isStepCompleted } from "./store/onboardingStore";
 
-function StepRoute({ canAccess, fallbackPath, element }) {
-  return canAccess ? element : <Navigate to={fallbackPath} replace />;
+function StepRoute({ checkAccess, fallbackPath, element }) {
+  return checkAccess() ? element : <Navigate to={fallbackPath} replace />;
 }
 
 export default function App() {
@@ -26,7 +26,7 @@ export default function App() {
             path="/verify-mobile"
             element={
               <StepRoute
-                canAccess={isApplicationStarted()}
+                checkAccess={isApplicationStarted}
                 fallbackPath="/"
                 element={<MobileVerification />}
               />
@@ -36,7 +36,7 @@ export default function App() {
             path="/upload-doc"
             element={
               <StepRoute
-                canAccess={isStepCompleted("mobile")}
+                checkAccess={() => isStepCompleted("mobile")}
                 fallbackPath="/verify-mobile"
                 element={<DocumentUpload />}
               />
@@ -46,7 +46,7 @@ export default function App() {
             path="/personal"
             element={
               <StepRoute
-                canAccess={isStepCompleted("documents")}
+                checkAccess={() => isStepCompleted("documents")}
                 fallbackPath="/upload-doc"
                 element={<PersonalDetails />}
               />
@@ -56,7 +56,7 @@ export default function App() {
             path="/address"
             element={
               <StepRoute
-                canAccess={isStepCompleted("personal")}
+                checkAccess={() => isStepCompleted("personal")}
                 fallbackPath="/personal"
                 element={<AddressDetails />}
               />
@@ -66,7 +66,7 @@ export default function App() {
             path="/financial"
             element={
               <StepRoute
-                canAccess={isStepCompleted("address")}
+                checkAccess={() => isStepCompleted("address")}
                 fallbackPath="/address"
                 element={<FinancialDetails />}
               />
@@ -76,7 +76,7 @@ export default function App() {
             path="/consent"
             element={
               <StepRoute
-                canAccess={isStepCompleted("financial")}
+                checkAccess={() => isStepCompleted("financial")}
                 fallbackPath="/financial"
                 element={<ConsentPage />}
               />
@@ -86,7 +86,7 @@ export default function App() {
             path="/processing"
             element={
               <StepRoute
-                canAccess={isStepCompleted("consent")}
+                checkAccess={() => isStepCompleted("consent")}
                 fallbackPath="/consent"
                 element={<ProcessingPage />}
               />
