@@ -1,12 +1,99 @@
-import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-function App() {
+import MainLayout from "./layouts/MainLayout";
+import WelcomePage from "./pages/WelcomePage";
+import MobileVerification from "./pages/MobileVerification";
+import DocumentUpload from "./pages/DocumentUpload";
+import PersonalDetails from "./pages/PersonalDetails";
+import AddressDetails from "./pages/AddressDetails";
+import FinancialDetails from "./pages/FinancialDetails";
+import ConsentPage from "./pages/ConsentPage";
+import ProcessingPage from "./pages/ProcessingPage";
+import { isApplicationStarted, isStepCompleted } from "./store/onboardingStore";
 
-  return (
-    <>
-      <p>Hello</p>
-    </>
-  )
+function StepRoute({ canAccess, fallbackPath, element }) {
+  return canAccess ? element : <Navigate to={fallbackPath} replace />;
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/welcome" element={<Navigate to="/" replace />} />
+          <Route
+            path="/verify-mobile"
+            element={
+              <StepRoute
+                canAccess={isApplicationStarted()}
+                fallbackPath="/"
+                element={<MobileVerification />}
+              />
+            }
+          />
+          <Route
+            path="/upload-doc"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("mobile")}
+                fallbackPath="/verify-mobile"
+                element={<DocumentUpload />}
+              />
+            }
+          />
+          <Route
+            path="/personal"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("documents")}
+                fallbackPath="/upload-doc"
+                element={<PersonalDetails />}
+              />
+            }
+          />
+          <Route
+            path="/address"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("personal")}
+                fallbackPath="/personal"
+                element={<AddressDetails />}
+              />
+            }
+          />
+          <Route
+            path="/financial"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("address")}
+                fallbackPath="/address"
+                element={<FinancialDetails />}
+              />
+            }
+          />
+          <Route
+            path="/consent"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("financial")}
+                fallbackPath="/financial"
+                element={<ConsentPage />}
+              />
+            }
+          />
+          <Route
+            path="/processing"
+            element={
+              <StepRoute
+                canAccess={isStepCompleted("consent")}
+                fallbackPath="/consent"
+                element={<ProcessingPage />}
+              />
+            }
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
