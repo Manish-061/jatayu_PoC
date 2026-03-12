@@ -56,9 +56,9 @@ export default function RegisterPage() {
       <div className="content-panel space-y-6">
         <div className="space-y-2 text-center">
           <p className="section-kicker">Create Account</p>
-          <h2 className="text-3xl font-semibold text-slate-950">Register for the portal</h2>
+          {/* <h2 className="text-3xl font-semibold text-slate-950">Register for the portal</h2> */}
           <p className="text-sm leading-6 text-slate-500">
-            Create a portal account with your email and password, then continue onboarding inside the app.
+            Create an account with your email and password, then continue onboarding.
           </p>
         </div>
 

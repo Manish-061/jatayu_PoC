@@ -33,7 +33,7 @@ export default function WelcomePage() {
         <div className="relative space-y-8 text-center">
           <div className="space-y-4">
             <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white/70">
-              Retail Banking Onboarding
+              Agentic Onboarding
             </span>
 
             <h2 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-5xl">

@@ -32,7 +32,7 @@ export default function LoginPage() {
       <div className="content-panel space-y-6">
         <div className="space-y-2 text-center">
           <p className="section-kicker">Sign In</p>
-          <h2 className="text-3xl font-semibold text-slate-950">Access the onboarding portal</h2>
+          {/* <h2 className="text-3xl font-semibold text-slate-950">Access the onboarding portal</h2> */}
           <p className="text-sm leading-6 text-slate-500">
             Login with your registered email and password.
           </p>
