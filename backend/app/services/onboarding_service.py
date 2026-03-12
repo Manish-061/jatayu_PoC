@@ -15,6 +15,7 @@ from app.schemas.onboarding_schema import (
 
 
 DOCUMENT_STORAGE_ROOT = Path(__file__).resolve().parents[2] / "storage" / "documents"
+ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
 
 def create_onboarding_case(
@@ -81,12 +82,19 @@ def upload_document_for_case(
     case_folder = DOCUMENT_STORAGE_ROOT / case.case_id
     case_folder.mkdir(parents=True, exist_ok=True)
 
-    file_extension = Path(file.filename).suffix
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF, PNG, JPG, and JPEG files are allowed.",
+        )
+
     stored_file_name = f"{document_type.value.lower()}-{uuid4().hex}{file_extension}"
     stored_path = case_folder / stored_file_name
 
     with stored_path.open("wb") as output_file:
         output_file.write(file.file.read())
+    file.file.close()
 
     existing_document = db.execute(
         select(Document).where(

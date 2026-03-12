@@ -26,6 +26,7 @@ export default function DocumentUploadPage() {
       .map(([type]) => type)
   );
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const handleUpload = async (documentType, file) => {
@@ -36,9 +37,10 @@ export default function DocumentUploadPage() {
 
     setUploadingType(documentType);
     setError("");
+    setSuccessMessage("");
 
     try {
-      await uploadDocumentRequest({
+      const response = await uploadDocumentRequest({
         caseId: getCaseId(),
         documentType,
         file,
@@ -47,6 +49,7 @@ export default function DocumentUploadPage() {
       setUploadedTypes((current) =>
         current.includes(documentType) ? current : [...current, documentType]
       );
+      setSuccessMessage(response.message);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -86,6 +89,7 @@ export default function DocumentUploadPage() {
               <UploadBox
                 title={`Upload ${document.title}`}
                 description="Accepted formats: PDF, PNG, JPG"
+                disabled={isUploading}
                 onUpload={(file) => handleUpload(document.type, file)}
               />
 
@@ -96,6 +100,7 @@ export default function DocumentUploadPage() {
       </div>
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {successMessage ? <p className="text-sm text-emerald-700">{successMessage}</p> : null}
 
       <button
         onClick={() => navigate("/status")}
