@@ -1,28 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { startApplicationRequest } from "../services/onboardingService";
-import { setStartedApplication } from "../store/onboardingStore";
+import { getCaseId, hasStartedCase } from "../store/onboardingStore";
 
 export default function WelcomePage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  const handleBegin = async () => {
-    setIsSubmitting(true);
-    setError("");
-
-    try {
-      const response = await startApplicationRequest();
-      setStartedApplication(response.application_id, response.status);
-      navigate("/verify-mobile");
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const hasExistingCase = hasStartedCase();
+  const existingCaseId = getCaseId();
 
   return (
     <section className="mx-auto grid max-w-4xl gap-6">
@@ -40,17 +23,21 @@ export default function WelcomePage() {
             </h2>
 
             <p className="mx-auto max-w-2xl text-base leading-7 text-slate-300">
-              Begin the application and complete each section step by step. Every
-              stage is now persisted through the backend and stored against a PostgreSQL
-              onboarding record.
+              Start a new onboarding application, upload supporting documents, and track the
+              case from the customer portal.
             </p>
           </div>
 
-          <button onClick={handleBegin} className="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? "Creating Application..." : "Begin Application"}
-          </button>
-
-          {error ? <p className="text-sm text-rose-200">{error}</p> : null}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button onClick={() => navigate("/apply")} className="btn-primary">
+              Begin Application
+            </button>
+            {hasExistingCase ? (
+              <button onClick={() => navigate("/status")} className="btn-secondary">
+                View Status {existingCaseId ? `(${existingCaseId})` : ""}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

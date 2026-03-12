@@ -1,61 +1,88 @@
-from datetime import date, datetime
+from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.models.document_model import DocumentStatus, DocumentType
 from app.models.onboarding_model import OnboardingStatus
 
 
-class ApplicationCreateResponse(BaseModel):
-    application_id: str
-    status: OnboardingStatus
+class PersonalDetailsPayload(BaseModel):
+    full_name: str = Field(min_length=2, max_length=255)
+    date_of_birth: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    gender: str = Field(min_length=1, max_length=50)
+    nationality: str = Field(min_length=1, max_length=100)
 
 
-class MobileStepPayload(BaseModel):
-    mobile: str = Field(pattern=r"^\d{10}$")
+class ContactDetailsPayload(BaseModel):
+    email: EmailStr
+    phone: str = Field(pattern=r"^\d{10}$")
 
 
-class DocumentStepPayload(BaseModel):
-    document_name: str = Field(min_length=1, max_length=255)
-
-
-class PersonalStepPayload(BaseModel):
-    full_name: str = Field(min_length=1, max_length=255)
-    dob: date
-
-
-class AddressStepPayload(BaseModel):
-    address: str = Field(min_length=1)
+class AddressDetailsPayload(BaseModel):
+    address_line: str = Field(min_length=1)
     city: str = Field(min_length=1, max_length=120)
     state: str = Field(min_length=1, max_length=120)
     postal_code: str = Field(pattern=r"^\d{6}$")
+    country: str = Field(min_length=1, max_length=120)
 
 
-class FinancialStepPayload(BaseModel):
+class IdentityDetailsPayload(BaseModel):
+    pan_number: str = Field(pattern=r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+    aadhaar_number: str = Field(pattern=r"^\d{12}$")
+
+
+class FinancialDetailsPayload(BaseModel):
     occupation: str = Field(min_length=1, max_length=120)
     income_range: str = Field(min_length=1, max_length=50)
 
 
-class ConsentStepPayload(BaseModel):
+class ConsentPayload(BaseModel):
     terms_accepted: bool
-    verification_allowed: bool
+    kyc_consent: bool
 
 
-class ApplicationResponse(BaseModel):
+class OnboardingStartRequest(BaseModel):
+    personal_details: PersonalDetailsPayload
+    contact_details: ContactDetailsPayload
+    address_details: AddressDetailsPayload
+    identity_details: IdentityDetailsPayload
+    financial_details: FinancialDetailsPayload
+    consent: ConsentPayload
+
+
+class OnboardingStartResponse(BaseModel):
+    case_id: str
+    status: OnboardingStatus
+    message: str
+
+
+class UploadDocumentResponse(BaseModel):
+    case_id: str
+    document_type: DocumentType
+    status: DocumentStatus
+    message: str
+
+
+class DocumentSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    type: DocumentType
+    file_name: str
+    status: DocumentStatus
+    uploaded_at: datetime
+
+
+class OnboardingStatusResponse(BaseModel):
+    case_id: str
+    customer_id: str
     status: OnboardingStatus
-    mobile: str | None
-    document_name: str | None
-    full_name: str | None
-    dob: date | None
-    address: str | None
-    city: str | None
-    state: str | None
-    postal_code: str | None
-    occupation: str | None
-    income_range: str | None
-    terms_accepted: bool
-    verification_allowed: bool
-    created_at: datetime
-    updated_at: datetime
+    personal_details: dict[str, str]
+    contact_details: dict[str, str]
+    address_details: dict[str, str]
+    identity_details: dict[str, str]
+    financial_details: dict[str, str]
+    consent: dict[str, bool]
+    documents: list[DocumentSummaryResponse]
+    risk_score: float | None
+    decision: str | None
+    account_number: str | None

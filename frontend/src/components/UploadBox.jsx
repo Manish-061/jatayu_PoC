@@ -1,4 +1,8 @@
-export default function UploadBox({ onUpload }) {
+export default function UploadBox({
+  onUpload,
+  title = "Upload document",
+  description = "PDF, PNG, or JPG files up to 10 MB are accepted for verification.",
+}) {
   const handleFile = (e) => {
     const file = e.target.files[0];
     onUpload(file);
@@ -10,10 +14,8 @@ export default function UploadBox({ onUpload }) {
         ↑
       </span>
       <div className="space-y-2">
-        <p className="text-lg font-semibold text-slate-950">Upload PAN or Aadhaar</p>
-        <p className="text-sm leading-6 text-slate-500">
-          PDF, PNG, or JPG files up to 10 MB are accepted for verification.
-        </p>
+        <p className="text-lg font-semibold text-slate-950">{title}</p>
+        <p className="text-sm leading-6 text-slate-500">{description}</p>
       </div>
 
       <span className="btn-secondary">Choose file</span>

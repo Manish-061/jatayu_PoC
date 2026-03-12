@@ -1,18 +1,37 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import WelcomePage from "./pages/WelcomePage";
-import MobileVerification from "./pages/MobileVerification";
-import DocumentUpload from "./pages/DocumentUpload";
-import PersonalDetails from "./pages/PersonalDetails";
-import AddressDetails from "./pages/AddressDetails";
-import FinancialDetails from "./pages/FinancialDetails";
-import ConsentPage from "./pages/ConsentPage";
-import ProcessingPage from "./pages/ProcessingPage";
-import { isApplicationStarted, isStepCompleted } from "./store/onboardingStore";
+import OnboardingFormPage from "./pages/OnboardingFormPage";
+import DocumentUploadPage from "./pages/DocumentUploadPage";
+import StatusPage from "./pages/StatusPage";
+import { hasStartedCase, hasSubmittedDetails } from "./store/onboardingStore";
+import { useAuth } from "./context/AuthContext";
 
 function StepRoute({ checkAccess, fallbackPath, element }) {
   return checkAccess() ? element : <Navigate to={fallbackPath} replace />;
+}
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isBootstrapping } = useAuth();
+
+  if (isBootstrapping) {
+    return <section className="content-panel text-center text-slate-600">Loading session...</section>;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { isAuthenticated, isBootstrapping } = useAuth();
+
+  if (isBootstrapping) {
+    return <section className="content-panel text-center text-slate-600">Loading session...</section>;
+  }
+
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
 }
 
 export default function App() {
@@ -20,76 +39,61 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<MainLayout />}>
-          <Route path="/" element={<WelcomePage />} />
+          <Route
+            path="/login"
+            element={
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicOnlyRoute>
+                <RegisterPage />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <WelcomePage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/welcome" element={<Navigate to="/" replace />} />
           <Route
-            path="/verify-mobile"
+            path="/apply"
             element={
-              <StepRoute
-                checkAccess={isApplicationStarted}
-                fallbackPath="/"
-                element={<MobileVerification />}
-              />
+              <ProtectedRoute>
+                <OnboardingFormPage />
+              </ProtectedRoute>
             }
           />
           <Route
-            path="/upload-doc"
+            path="/documents"
             element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("mobile")}
-                fallbackPath="/verify-mobile"
-                element={<DocumentUpload />}
-              />
+              <ProtectedRoute>
+                <StepRoute
+                  checkAccess={hasSubmittedDetails}
+                  fallbackPath="/apply"
+                  element={<DocumentUploadPage />}
+                />
+              </ProtectedRoute>
             }
           />
           <Route
-            path="/personal"
+            path="/status"
             element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("documents")}
-                fallbackPath="/upload-doc"
-                element={<PersonalDetails />}
-              />
-            }
-          />
-          <Route
-            path="/address"
-            element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("personal")}
-                fallbackPath="/personal"
-                element={<AddressDetails />}
-              />
-            }
-          />
-          <Route
-            path="/financial"
-            element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("address")}
-                fallbackPath="/address"
-                element={<FinancialDetails />}
-              />
-            }
-          />
-          <Route
-            path="/consent"
-            element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("financial")}
-                fallbackPath="/financial"
-                element={<ConsentPage />}
-              />
-            }
-          />
-          <Route
-            path="/processing"
-            element={
-              <StepRoute
-                checkAccess={() => isStepCompleted("consent")}
-                fallbackPath="/consent"
-                element={<ProcessingPage />}
-              />
+              <ProtectedRoute>
+                <StepRoute
+                  checkAccess={hasStartedCase}
+                  fallbackPath="/apply"
+                  element={<StatusPage />}
+                />
+              </ProtectedRoute>
             }
           />
         </Route>

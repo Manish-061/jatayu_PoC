@@ -8,6 +8,9 @@ class Settings(BaseSettings):
         "postgresql+psycopg://postgres:Manish%40123@localhost:5432/jatayu_onboarding"
     )
     frontend_origin: str = "http://localhost:5173"
+    secret_key: str = "change-this-for-local-dev"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,11 +1,10 @@
 const STORAGE_KEY = "jatayu-onboarding";
 
 const defaultState = {
-  applicationId: null,
-  started: false,
+  caseId: null,
   status: null,
-  completedSteps: {},
-  formData: {},
+  detailsSubmitted: false,
+  uploadedDocuments: {},
 };
 
 function loadState() {
@@ -13,13 +12,13 @@ function loadState() {
     return { ...defaultState };
   }
 
-  const storedState = window.sessionStorage.getItem(STORAGE_KEY);
-  if (!storedState) {
+  const rawState = window.sessionStorage.getItem(STORAGE_KEY);
+  if (!rawState) {
     return { ...defaultState };
   }
 
   try {
-    return { ...defaultState, ...JSON.parse(storedState) };
+    return { ...defaultState, ...JSON.parse(rawState) };
   } catch {
     return { ...defaultState };
   }
@@ -31,88 +30,61 @@ function persistState(nextState) {
   }
 }
 
-function completedStepsFromApplication(application) {
-  return {
-    mobile: Boolean(application.mobile),
-    documents: Boolean(application.document_name),
-    personal: Boolean(application.full_name && application.dob),
-    address: Boolean(
-      application.address &&
-        application.city &&
-        application.state &&
-        application.postal_code
-    ),
-    financial: Boolean(application.occupation && application.income_range),
-    consent: Boolean(application.terms_accepted && application.verification_allowed),
-  };
-}
-
-function formDataFromApplication(application) {
-  return {
-    mobile: application.mobile ?? "",
-    document_name: application.document_name ?? "",
-    full_name: application.full_name ?? "",
-    dob: application.dob ?? "",
-    address: application.address ?? "",
-    city: application.city ?? "",
-    state: application.state ?? "",
-    postal_code: application.postal_code ?? "",
-    occupation: application.occupation ?? "",
-    income_range: application.income_range ?? "",
-    terms_accepted: application.terms_accepted ?? false,
-    verification_allowed: application.verification_allowed ?? false,
-  };
-}
-
-export function setStartedApplication(applicationId, status) {
-  const currentState = loadState();
+export function setStartedCase(caseId, status) {
   const nextState = {
-    ...currentState,
-    applicationId,
-    started: true,
+    ...loadState(),
+    caseId,
     status,
+    detailsSubmitted: true,
   };
-
   persistState(nextState);
   return nextState;
 }
 
-export function syncApplication(application) {
+export function markDocumentUploaded(documentType) {
   const currentState = loadState();
   const nextState = {
     ...currentState,
-    applicationId: application.id,
-    started: true,
-    status: application.status,
-    completedSteps: completedStepsFromApplication(application),
-    formData: formDataFromApplication(application),
+    uploadedDocuments: {
+      ...currentState.uploadedDocuments,
+      [documentType]: true,
+    },
   };
-
   persistState(nextState);
   return nextState;
 }
 
-export function getOnboardingState() {
-  return loadState();
+export function syncStatus(statusPayload) {
+  const nextState = {
+    ...loadState(),
+    caseId: statusPayload.case_id,
+    status: statusPayload.status,
+    detailsSubmitted: true,
+    uploadedDocuments: Object.fromEntries(
+      statusPayload.documents.map((document) => [document.type, true])
+    ),
+  };
+  persistState(nextState);
+  return nextState;
 }
 
-export function isApplicationStarted() {
-  const state = loadState();
-  return state.started && Boolean(state.applicationId);
+export function getCaseId() {
+  return loadState().caseId;
 }
 
-export function isStepCompleted(stepKey) {
-  return Boolean(loadState().completedSteps[stepKey]);
+export function hasStartedCase() {
+  return Boolean(loadState().caseId);
 }
 
-export function getApplicationId() {
-  return loadState().applicationId;
+export function hasSubmittedDetails() {
+  return loadState().detailsSubmitted;
 }
 
-export function getOnboardingStatus() {
-  return loadState().status;
+export function hasUploadedRequiredDocuments() {
+  const uploaded = loadState().uploadedDocuments;
+  return Boolean(uploaded.PAN && uploaded.AADHAAR);
 }
 
-export function getOnboardingData() {
-  return loadState().formData;
+export function getUploadedDocuments() {
+  return loadState().uploadedDocuments;
 }

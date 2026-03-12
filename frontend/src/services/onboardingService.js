@@ -1,86 +1,43 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import apiClient from "./apiClient";
 
 function unwrapError(error) {
   return (
     error?.response?.data?.detail ??
     error?.message ??
-    "Something went wrong while saving the application."
+    "Onboarding request failed."
   );
 }
 
-export async function startApplicationRequest() {
+export async function startOnboardingRequest(payload) {
   try {
-    const response = await api.post("/onboarding");
+    const response = await apiClient.post("/onboarding/start", payload);
     return response.data;
   } catch (error) {
     throw new Error(unwrapError(error));
   }
 }
 
-export async function getApplicationRequest(applicationId) {
+export async function uploadDocumentRequest({ caseId, documentType, file }) {
   try {
-    const response = await api.get(`/onboarding/${applicationId}`);
+    const formData = new FormData();
+    formData.append("case_id", caseId);
+    formData.append("document_type", documentType);
+    formData.append("file", file);
+
+    const response = await apiClient.post("/onboarding/upload-document", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   } catch (error) {
     throw new Error(unwrapError(error));
   }
 }
 
-export async function updateMobileRequest(applicationId, payload) {
+export async function getOnboardingStatusRequest(caseId) {
   try {
-    const response = await api.patch(`/onboarding/${applicationId}/mobile`, payload);
-    return response.data;
-  } catch (error) {
-    throw new Error(unwrapError(error));
-  }
-}
-
-export async function updateDocumentsRequest(applicationId, payload) {
-  try {
-    const response = await api.patch(`/onboarding/${applicationId}/documents`, payload);
-    return response.data;
-  } catch (error) {
-    throw new Error(unwrapError(error));
-  }
-}
-
-export async function updatePersonalRequest(applicationId, payload) {
-  try {
-    const response = await api.patch(`/onboarding/${applicationId}/personal`, payload);
-    return response.data;
-  } catch (error) {
-    throw new Error(unwrapError(error));
-  }
-}
-
-export async function updateAddressRequest(applicationId, payload) {
-  try {
-    const response = await api.patch(`/onboarding/${applicationId}/address`, payload);
-    return response.data;
-  } catch (error) {
-    throw new Error(unwrapError(error));
-  }
-}
-
-export async function updateFinancialRequest(applicationId, payload) {
-  try {
-    const response = await api.patch(`/onboarding/${applicationId}/financial`, payload);
-    return response.data;
-  } catch (error) {
-    throw new Error(unwrapError(error));
-  }
-}
-
-export async function updateConsentRequest(applicationId, payload) {
-  try {
-    const response = await api.patch(`/onboarding/${applicationId}/consent`, payload);
+    const response = await apiClient.get(`/onboarding/status/${caseId}`);
     return response.data;
   } catch (error) {
     throw new Error(unwrapError(error));

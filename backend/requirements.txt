@@ -3,4 +3,6 @@ uvicorn[standard]
 sqlalchemy
 psycopg[binary]
 pydantic-settings
-
+python-jose[cryptography]
+email-validator
+python-multipart

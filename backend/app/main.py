@@ -7,6 +7,10 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.database.base import Base
 from app.database.db import engine
+from app.models.audit_model import AuditLog
+from app.models.document_model import Document
+from app.models.onboarding_model import OnboardingCase
+from app.models.user_model import User
 
 
 @asynccontextmanager
