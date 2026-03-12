@@ -32,7 +32,7 @@ function PublicOnlyRoute({ children }) {
     return <section className="content-panel text-center text-slate-600">Loading session...</section>;
   }
 
-  return isAuthenticated ? <Navigate to="/status" replace /> : children;
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
 }
 
 export default function App() {
@@ -60,18 +60,11 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Navigate to="/status" replace />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/welcome"
-            element={
-              <ProtectedRoute>
                 <WelcomePage />
               </ProtectedRoute>
             }
           />
+          <Route path="/welcome" element={<Navigate to="/" replace />} />
           <Route
             path="/apply"
             element={
