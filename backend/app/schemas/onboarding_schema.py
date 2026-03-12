@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.document_model import DocumentStatus, DocumentType
 from app.models.onboarding_model import OnboardingStatus
@@ -14,7 +14,6 @@ class PersonalDetailsPayload(BaseModel):
 
 
 class ContactDetailsPayload(BaseModel):
-    email: EmailStr
     phone: str = Field(pattern=r"^\d{10}$")
 
 

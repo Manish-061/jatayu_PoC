@@ -24,11 +24,7 @@ export async function uploadDocumentRequest({ caseId, documentType, file }) {
     formData.append("document_type", documentType);
     formData.append("file", file);
 
-    const response = await apiClient.post("/onboarding/upload-document", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await apiClient.post("/onboarding/upload-document", formData);
     return response.data;
   } catch (error) {
     throw new Error(unwrapError(error));

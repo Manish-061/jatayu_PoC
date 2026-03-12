@@ -21,6 +21,7 @@ ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 def create_onboarding_case(
     db: Session,
     customer_id: str,
+    customer_email: str,
     payload: OnboardingStartRequest,
 ) -> OnboardingCase:
     if not payload.consent.terms_accepted or not payload.consent.kyc_consent:
@@ -37,7 +38,7 @@ def create_onboarding_case(
         date_of_birth=payload.personal_details.date_of_birth,
         gender=payload.personal_details.gender,
         nationality=payload.personal_details.nationality,
-        email=payload.contact_details.email,
+        email=customer_email,
         phone=payload.contact_details.phone,
         address_line=payload.address_details.address_line,
         city=payload.address_details.city,
@@ -185,3 +186,23 @@ def build_status_response(db: Session, case: OnboardingCase) -> OnboardingStatus
 
 def generate_case_id() -> str:
     return f"CASE{uuid4().hex[:8].upper()}"
+
+
+def normalize_document_type(document_type: str) -> DocumentType:
+    normalized = document_type.strip().upper().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "PAN": DocumentType.PAN,
+        "AADHAAR": DocumentType.AADHAAR,
+        "AADHAR": DocumentType.AADHAAR,
+        "ADHAR": DocumentType.AADHAAR,
+        "ADHAAR": DocumentType.AADHAAR,
+        "PASSPORT": DocumentType.PASSPORT,
+        "DRIVING_LICENSE": DocumentType.DRIVING_LICENSE,
+    }
+    try:
+        return aliases[normalized]
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported document type.",
+        ) from exc

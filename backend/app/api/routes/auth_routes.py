@@ -1,6 +1,9 @@
+import re
+from random import randint
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import (
@@ -50,21 +53,17 @@ def list_roles() -> list[RoleOptionResponse]:
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)) -> UserResponse:
-    existing_user = db.execute(
-        select(User).where(
-            or_(User.email == payload.email, User.mobile_number == payload.mobile_number)
-        )
-    ).scalar_one_or_none()
+    existing_user = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
     if existing_user is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A user with this email or mobile number already exists.",
+            detail="A user with this email already exists.",
         )
 
     user = User(
-        full_name=payload.full_name,
+        full_name=_generate_display_name(payload.email),
         email=payload.email,
-        mobile_number=payload.mobile_number,
+        mobile_number=_generate_placeholder_mobile_number(db),
         password_hash=get_password_hash(payload.password),
         role=payload.role,
     )
@@ -112,3 +111,17 @@ def get_current_user(
 @router.get("/me", response_model=UserResponse)
 def read_current_user(current_user: User = Depends(get_current_user)) -> UserResponse:
     return UserResponse.model_validate(current_user)
+
+
+def _generate_display_name(email: str) -> str:
+    local_part = email.split("@", 1)[0]
+    normalized = re.sub(r"[._-]+", " ", local_part).strip()
+    return normalized.title() or "Portal User"
+
+
+def _generate_placeholder_mobile_number(db: Session) -> str:
+    while True:
+        candidate = f"9{randint(0, 999999999):09d}"
+        existing_user = db.execute(select(User).where(User.mobile_number == candidate)).scalar_one_or_none()
+        if existing_user is None:
+            return candidate

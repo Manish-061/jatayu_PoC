@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app.api.routes.auth_routes import get_current_user
 from app.database.db import get_db
-from app.models.document_model import DocumentType
 from app.models.user_model import User
 from app.schemas.onboarding_schema import (
     OnboardingStartRequest,
@@ -15,6 +14,7 @@ from app.services.onboarding_service import (
     build_status_response,
     create_onboarding_case,
     get_case_or_404,
+    normalize_document_type,
     upload_document_for_case,
 )
 
@@ -29,7 +29,7 @@ def start_onboarding(
     current_user: User = Depends(get_current_user),
 ) -> OnboardingStartResponse:
     _ensure_customer_role(current_user)
-    case = create_onboarding_case(db, current_user.id, payload)
+    case = create_onboarding_case(db, current_user.id, current_user.email, payload)
     return OnboardingStartResponse(
         case_id=case.case_id,
         status=case.status,
@@ -40,7 +40,7 @@ def start_onboarding(
 @router.post("/upload-document", response_model=UploadDocumentResponse)
 def upload_document(
     case_id: str = Form(...),
-    document_type: DocumentType = Form(...),
+    document_type: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -48,7 +48,7 @@ def upload_document(
     _ensure_customer_role(current_user)
     case = get_case_or_404(db, case_id)
     _ensure_case_access(case.customer_id, current_user)
-    document = upload_document_for_case(db, case, document_type, file)
+    document = upload_document_for_case(db, case, normalize_document_type(document_type), file)
     return UploadDocumentResponse(
         case_id=case.case_id,
         document_type=document.document_type,

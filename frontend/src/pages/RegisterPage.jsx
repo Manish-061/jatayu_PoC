@@ -58,43 +58,21 @@ export default function RegisterPage() {
           <p className="section-kicker">Create Account</p>
           <h2 className="text-3xl font-semibold text-slate-950">Register for the portal</h2>
           <p className="text-sm leading-6 text-slate-500">
-            Create a customer account to start and track onboarding.
+            Create a portal account with your email and password, then continue onboarding inside the app.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
             <FormInput
-              label="Full Name"
-              name="full_name"
+              label="Email Address"
+              name="email"
               register={register}
-              rules={{ required: "Full name is required." }}
-              error={errors.full_name?.message}
+              type="email"
+              rules={{ required: "Email is required." }}
+              error={errors.email?.message}
             />
           </div>
-
-          <FormInput
-            label="Email Address"
-            name="email"
-            register={register}
-            type="email"
-            rules={{ required: "Email is required." }}
-            error={errors.email?.message}
-          />
-
-          <FormInput
-            label="Mobile Number"
-            name="mobile_number"
-            register={register}
-            rules={{
-              required: "Mobile number is required.",
-              pattern: {
-                value: /^[0-9]{10}$/,
-                message: "Enter a valid 10-digit mobile number.",
-              },
-            }}
-            error={errors.mobile_number?.message}
-          />
 
           <div className="md:col-span-2">
             <FormInput

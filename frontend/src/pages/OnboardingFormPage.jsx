@@ -16,8 +16,8 @@ const steps = [
   },
   {
     title: "Contact",
-    description: "Add the primary email address and mobile number for communication.",
-    fields: ["email", "phone"],
+    description: "Add the primary mobile number for communication. Email is taken from the signed-in account.",
+    fields: ["phone"],
   },
   {
     title: "Address",
@@ -87,7 +87,6 @@ export default function OnboardingFormPage() {
         nationality: data.nationality,
       },
       contact_details: {
-        email: data.email,
         phone: data.phone,
       },
       address_details: {
@@ -204,14 +203,6 @@ export default function OnboardingFormPage() {
 
           {currentStep === 1 ? (
             <>
-              <FormInput
-                label="Email Address"
-                name="email"
-                register={register}
-                type="email"
-                rules={{ required: "Email is required." }}
-                error={errors.email?.message}
-              />
               <FormInput
                 label="Phone Number"
                 name="phone"
