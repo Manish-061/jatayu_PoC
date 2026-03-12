@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import DocumentPreviewCard from "../components/DocumentPreviewCard";
 import UploadBox from "../components/UploadBox";
-import { getCaseId, getUploadedDocuments, markDocumentUploaded } from "../store/onboardingStore";
-import { uploadDocumentRequest } from "../services/onboardingService";
+import {
+  getCaseId,
+  getUploadedDocuments,
+  markDocumentUploaded,
+  syncStatus,
+} from "../store/onboardingStore";
+import {
+  getDocumentFileRequest,
+  getOnboardingStatusRequest,
+  uploadDocumentRequest,
+} from "../services/onboardingService";
 
 const requiredDocuments = [
   {
@@ -25,9 +35,83 @@ export default function DocumentUploadPage() {
       .filter(([, uploaded]) => uploaded)
       .map(([type]) => type)
   );
+  const [documents, setDocuments] = useState({});
+  const [previewUrls, setPreviewUrls] = useState({});
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
+  const previewUrlsRef = useRef({});
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadDocuments() {
+      const caseId = getCaseId();
+      if (!caseId) {
+        return;
+      }
+
+      try {
+        const response = await getOnboardingStatusRequest(caseId);
+        if (ignore) {
+          return;
+        }
+
+        syncStatus(response);
+        setDocuments(Object.fromEntries(response.documents.map((document) => [document.type, document])));
+        setUploadedTypes(response.documents.map((document) => document.type));
+      } catch (requestError) {
+        if (!ignore) {
+          setError(requestError.message);
+        }
+      }
+    }
+
+    loadDocuments();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadPreviews() {
+      for (const document of Object.values(documents)) {
+        if (previewUrlsRef.current[document.id]) {
+          continue;
+        }
+
+        try {
+          const blob = await getDocumentFileRequest(document.id);
+          if (ignore) {
+            return;
+          }
+
+          const objectUrl = URL.createObjectURL(blob);
+          previewUrlsRef.current[document.id] = objectUrl;
+          setPreviewUrls((current) => ({
+            ...current,
+            [document.id]: objectUrl,
+          }));
+        } catch {
+          // Skip preview rendering errors and keep the upload flow usable.
+        }
+      }
+    }
+
+    loadPreviews();
+    return () => {
+      ignore = true;
+    };
+  }, [documents]);
+
+  useEffect(
+    () => () => {
+      Object.values(previewUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    },
+    []
+  );
 
   const handleUpload = async (documentType, file) => {
     if (!file) {
@@ -46,9 +130,28 @@ export default function DocumentUploadPage() {
         file,
       });
       markDocumentUploaded(documentType);
+      const localPreviewUrl = URL.createObjectURL(file);
+      const previousPreviewUrl = previewUrlsRef.current[response.document_id];
+      if (previousPreviewUrl) {
+        URL.revokeObjectURL(previousPreviewUrl);
+      }
+      previewUrlsRef.current[response.document_id] = localPreviewUrl;
       setUploadedTypes((current) =>
         current.includes(documentType) ? current : [...current, documentType]
       );
+      setDocuments((current) => ({
+        ...current,
+        [documentType]: {
+          id: response.document_id,
+          type: response.document_type,
+          file_name: response.file_name,
+          status: response.status,
+        },
+      }));
+      setPreviewUrls((current) => ({
+        ...current,
+        [response.document_id]: localPreviewUrl,
+      }));
       setSuccessMessage(response.message);
     } catch (requestError) {
       setError(requestError.message);
@@ -94,6 +197,13 @@ export default function DocumentUploadPage() {
               />
 
               {isUploading ? <p className="text-sm text-slate-500">Uploading {document.title}...</p> : null}
+
+              {documents[document.type] ? (
+                <DocumentPreviewCard
+                  document={documents[document.type]}
+                  previewUrl={previewUrls[documents[document.type].id]}
+                />
+              ) : null}
             </div>
           );
         })}

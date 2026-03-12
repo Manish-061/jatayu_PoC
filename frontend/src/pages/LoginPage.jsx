@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       await login(data);
-      navigate(location.state?.from?.pathname ?? "/", { replace: true });
+      navigate(location.state?.from?.pathname ?? "/status", { replace: true });
     } catch (error) {
       setSubmitError(error.message);
     }

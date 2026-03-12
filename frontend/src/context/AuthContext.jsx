@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { getCurrentUserRequest, loginRequest } from "../services/authService";
+import {
+  getCurrentUserRequest,
+  loginRequest,
+  updateProfileRequest,
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -58,6 +62,13 @@ export function AuthProvider({ children }) {
     return response.user;
   }
 
+  async function updateProfile(payload) {
+    const updatedUser = await updateProfileRequest(payload);
+    window.localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
   function logout() {
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
@@ -73,6 +84,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(token && user),
       isBootstrapping,
       login,
+      updateProfile,
       logout,
     }),
     [token, user, isBootstrapping]

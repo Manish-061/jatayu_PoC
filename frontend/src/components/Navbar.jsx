@@ -26,7 +26,7 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               <NavLink
-                to="/"
+                to="/status"
                 className={({ isActive }) =>
                   [
                     "rounded-full px-4 py-2 text-sm font-medium transition",
@@ -36,7 +36,35 @@ export default function Navbar() {
                   ].join(" ")
                 }
               >
-                Home
+                Case Tracking
+              </NavLink>
+
+              <NavLink
+                to="/apply"
+                className={({ isActive }) =>
+                  [
+                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "bg-[var(--color-primary)] text-white shadow-lg shadow-cyan-900/20"
+                      : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")
+                }
+              >
+                Start Application
+              </NavLink>
+
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  [
+                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "bg-[var(--color-primary)] text-white shadow-lg shadow-cyan-900/20"
+                      : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  ].join(" ")
+                }
+              >
+                Profile
               </NavLink>
 
               <button onClick={logout} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">

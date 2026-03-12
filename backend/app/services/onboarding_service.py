@@ -68,6 +68,16 @@ def get_case_or_404(db: Session, case_id: str) -> OnboardingCase:
     return case
 
 
+def get_document_or_404(db: Session, document_id: str) -> Document:
+    document = db.get(Document, document_id)
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found.",
+        )
+    return document
+
+
 def upload_document_for_case(
     db: Session,
     case: OnboardingCase,
@@ -136,6 +146,7 @@ def build_status_response(db: Session, case: OnboardingCase) -> OnboardingStatus
 
     document_items = [
         DocumentSummaryResponse(
+            id=document.id,
             type=document.document_type,
             file_name=document.file_name,
             status=document.status,

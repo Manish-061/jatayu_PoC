@@ -18,6 +18,7 @@ from app.schemas.auth_schema import (
     AuthTokenResponse,
     RoleOptionResponse,
     UserLoginRequest,
+    UserProfileUpdateRequest,
     UserRegisterRequest,
     UserResponse,
     UserRole,
@@ -110,6 +111,38 @@ def get_current_user(
 
 @router.get("/me", response_model=UserResponse)
 def read_current_user(current_user: User = Depends(get_current_user)) -> UserResponse:
+    return UserResponse.model_validate(current_user)
+
+
+@router.patch("/profile", response_model=UserResponse)
+def update_profile(
+    payload: UserProfileUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    existing_email_user = db.execute(
+        select(User).where(User.email == payload.email, User.id != current_user.id)
+    ).scalar_one_or_none()
+    if existing_email_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists.",
+        )
+
+    existing_mobile_user = db.execute(
+        select(User).where(User.mobile_number == payload.mobile_number, User.id != current_user.id)
+    ).scalar_one_or_none()
+    if existing_mobile_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this mobile number already exists.",
+        )
+
+    current_user.full_name = payload.full_name
+    current_user.email = payload.email
+    current_user.mobile_number = payload.mobile_number
+    db.commit()
+    db.refresh(current_user)
     return UserResponse.model_validate(current_user)
 
 

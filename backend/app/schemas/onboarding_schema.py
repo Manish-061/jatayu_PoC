@@ -56,8 +56,10 @@ class OnboardingStartResponse(BaseModel):
 
 
 class UploadDocumentResponse(BaseModel):
+    document_id: str
     case_id: str
     document_type: DocumentType
+    file_name: str
     status: DocumentStatus
     message: str
 
@@ -65,6 +67,7 @@ class UploadDocumentResponse(BaseModel):
 class DocumentSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: str
     type: DocumentType
     file_name: str
     status: DocumentStatus

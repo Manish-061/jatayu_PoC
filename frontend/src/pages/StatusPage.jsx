@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { getOnboardingStatusRequest } from "../services/onboardingService";
+import DocumentPreviewCard from "../components/DocumentPreviewCard";
+import {
+  getDocumentFileRequest,
+  getOnboardingStatusRequest,
+} from "../services/onboardingService";
 import { getCaseId, syncStatus } from "../store/onboardingStore";
 
 export default function StatusPage() {
   const [caseStatus, setCaseStatus] = useState(null);
+  const [previewUrls, setPreviewUrls] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const previewUrlsRef = useRef({});
 
   useEffect(() => {
     let ignore = false;
@@ -34,6 +40,50 @@ export default function StatusPage() {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadPreviews() {
+      if (!caseStatus) {
+        return;
+      }
+
+      for (const document of caseStatus.documents) {
+        if (previewUrlsRef.current[document.id]) {
+          continue;
+        }
+
+        try {
+          const blob = await getDocumentFileRequest(document.id);
+          if (ignore) {
+            return;
+          }
+
+          const objectUrl = URL.createObjectURL(blob);
+          previewUrlsRef.current[document.id] = objectUrl;
+          setPreviewUrls((current) => ({
+            ...current,
+            [document.id]: objectUrl,
+          }));
+        } catch {
+          // Keep the status page usable even when a preview cannot be rendered.
+        }
+      }
+    }
+
+    loadPreviews();
+    return () => {
+      ignore = true;
+    };
+  }, [caseStatus]);
+
+  useEffect(
+    () => () => {
+      Object.values(previewUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    },
+    []
+  );
 
   if (loading) {
     return <section className="content-panel text-center text-slate-600">Loading onboarding status...</section>;
@@ -85,11 +135,11 @@ export default function StatusPage() {
                 {caseStatus.documents.length > 0 ? (
                   <div className="space-y-3">
                     {caseStatus.documents.map((document) => (
-                      <div key={`${document.type}-${document.file_name}`} className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <p className="font-semibold text-slate-900">{document.type}</p>
-                        <p className="text-sm text-slate-600">{document.file_name}</p>
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)]">{document.status}</p>
-                      </div>
+                      <DocumentPreviewCard
+                        key={document.id}
+                        document={document}
+                        previewUrl={previewUrls[document.id]}
+                      />
                     ))}
                   </div>
                 ) : (

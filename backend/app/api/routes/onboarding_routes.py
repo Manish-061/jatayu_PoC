@@ -1,8 +1,13 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.routes.auth_routes import get_current_user
 from app.database.db import get_db
+from app.models.onboarding_model import OnboardingCase
 from app.models.user_model import User
 from app.schemas.onboarding_schema import (
     OnboardingStartRequest,
@@ -14,6 +19,7 @@ from app.services.onboarding_service import (
     build_status_response,
     create_onboarding_case,
     get_case_or_404,
+    get_document_or_404,
     normalize_document_type,
     upload_document_for_case,
 )
@@ -50,8 +56,10 @@ def upload_document(
     _ensure_case_access(case.customer_id, current_user)
     document = upload_document_for_case(db, case, normalize_document_type(document_type), file)
     return UploadDocumentResponse(
+        document_id=document.id,
         case_id=case.case_id,
         document_type=document.document_type,
+        file_name=document.file_name,
         status=document.status,
         message=f"{document.document_type.value} document uploaded successfully",
     )
@@ -66,6 +74,33 @@ def get_onboarding_status(
     case = get_case_or_404(db, case_id)
     _ensure_case_access(case.customer_id, current_user)
     return build_status_response(db, case)
+
+
+@router.get("/documents/{document_id}")
+def get_uploaded_document(
+    document_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FileResponse:
+    document = get_document_or_404(db, document_id)
+    case = db.execute(
+        select(OnboardingCase).where(OnboardingCase.id == document.case_id)
+    ).scalar_one_or_none()
+    if case is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Onboarding case not found for this document.",
+        )
+    _ensure_case_access(case.customer_id, current_user)
+
+    file_path = Path(document.file_path)
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Stored document file not found.",
+        )
+
+    return FileResponse(path=file_path, filename=document.file_name)
 
 
 def _ensure_customer_role(current_user: User) -> None:

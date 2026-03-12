@@ -39,3 +39,14 @@ export async function getOnboardingStatusRequest(caseId) {
     throw new Error(unwrapError(error));
   }
 }
+
+export async function getDocumentFileRequest(documentId) {
+  try {
+    const response = await apiClient.get(`/onboarding/documents/${documentId}`, {
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(unwrapError(error));
+  }
+}

@@ -43,3 +43,12 @@ export async function getRolesRequest() {
     throw new Error(unwrapError(error));
   }
 }
+
+export async function updateProfileRequest(payload) {
+  try {
+    const response = await apiClient.patch("/auth/profile", payload);
+    return response.data;
+  } catch (error) {
+    throw new Error(unwrapError(error));
+  }
+}

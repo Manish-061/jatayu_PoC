@@ -7,6 +7,7 @@ import WelcomePage from "./pages/WelcomePage";
 import OnboardingFormPage from "./pages/OnboardingFormPage";
 import DocumentUploadPage from "./pages/DocumentUploadPage";
 import StatusPage from "./pages/StatusPage";
+import ProfilePage from "./pages/ProfilePage";
 import { hasStartedCase, hasSubmittedDetails } from "./store/onboardingStore";
 import { useAuth } from "./context/AuthContext";
 
@@ -31,7 +32,7 @@ function PublicOnlyRoute({ children }) {
     return <section className="content-panel text-center text-slate-600">Loading session...</section>;
   }
 
-  return isAuthenticated ? <Navigate to="/" replace /> : children;
+  return isAuthenticated ? <Navigate to="/status" replace /> : children;
 }
 
 export default function App() {
@@ -59,11 +60,18 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
+                <Navigate to="/status" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/welcome"
+            element={
+              <ProtectedRoute>
                 <WelcomePage />
               </ProtectedRoute>
             }
           />
-          <Route path="/welcome" element={<Navigate to="/" replace />} />
           <Route
             path="/apply"
             element={
@@ -93,6 +101,14 @@ export default function App() {
                   fallbackPath="/apply"
                   element={<StatusPage />}
                 />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
